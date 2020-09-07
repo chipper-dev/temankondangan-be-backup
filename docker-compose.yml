@@ -1,0 +1,94 @@
+version: "3.7"
+services:
+    tk-be-discovery-service:
+        container_name: tk-be-discovery-service
+        image: chippermitrais/tk-be-discovery-service
+        ports:
+         - 8761:8761
+        environment:
+         - DISCOVERY_URL=http://temankondangan-discovery-service:8761/eureka/
+        networks:
+         - temankondangan_network
+    tk-be-gateway-service:
+        container_name: tk-be-gateway-service
+        image: chippermitrais/tk-be-proxy-auth-service
+        ports:
+         - 9090:9090
+        environment:
+         - EUREKA_SERVER_URL=http://temankondangan-discovery-service:8761/eureka/
+        depends_on:
+         - temankondangan-discovery-service
+        networks:
+         - temankondangan_network
+    dbpostgresql:
+        container_name: dbpostgresql
+        image: postgres
+        ports:
+         - 5432:5432
+        environment:
+         - POSTGRES_PASSWORD=postgres
+         - POSTGRES_USER=postgres
+         - POSTGRES_DB=temankondangan_db
+        networks:
+         - temankondangan_network
+    tk-be-legacy-service:
+        container_name: tk-be-legacy-service
+        image: chippermitrais/temankondangan-backend
+        ports:
+         - 80:8181
+        environment:
+         - EUREKA_SERVER_URL=http://temankondangan-discovery-service:8761/eureka/
+         - DB_URL=jdbc:postgresql://dbpostgresql:5432/temankondangan_db
+         - DB_USERNAME=postgres
+         - DB_PASSWORD=postgres
+         - EMAIL_PASSWORD=zgenmuduzxyxwlry
+         - EMAIL_USER=chipper.mitrais@gmail.com
+         - FIREBASE_DATABASE=https://temankondangan-92149.firebaseio.com/
+         - GOOGLE_APPLICATION_CREDENTIALS=/team6-backend-config/serviceAccountKey.json
+         - TOKEN_SECRET=963D96C90030DD58429D2751AC1BDBBC
+        depends_on:
+         - dbpostgresql
+        networks:
+         - temankondangan_network    
+    tk-be-microservice:
+        container_name: tk-be-microservice
+        image: chippermitrais/temankondangan-ms-backend
+        ports:
+         - 8188:8181
+        environment:
+         - EUREKA_SERVER_URL=http://temankondangan-discovery-service:8761/eureka/
+         - DB_URL=jdbc:postgresql://dbpostgresql:5432/temankondangan_db
+         - DB_USERNAME=postgres
+         - DB_PASSWORD=postgres
+         - EMAIL_PASSWORD=zgenmuduzxyxwlry
+         - EMAIL_USER=chipper.mitrais@gmail.com
+         - FIREBASE_DATABASE=https://temankondangan-92149.firebaseio.com/
+         - GOOGLE_APPLICATION_CREDENTIALS=/team6-backend-config/serviceAccountKey.json
+         - TOKEN_SECRET=963D96C90030DD58429D2751AC1BDBBC
+        depends_on:
+         - temankondangan-discovery-service
+         - temankondangan-gateway-service
+         - dbpostgresql
+        networks:
+         - temankondangan_network
+     tk-be-profile-service:
+        container_name: tk-be-profile-service
+        image: chippermitrais/tk-be-profile-service
+        ports:
+         - 9091:9091
+        environment:
+         - EUREKA_SERVER_URL=http://temankondangan-discovery-service:8761/eureka/
+         - DB_URL=jdbc:postgresql://dbpostgresql:5432/tk_db_profile_service
+         - DB_USERNAME=postgres
+         - DB_PASSWORD=postgres
+         - TOKEN_SECRET=963D96C90030DD58429D2751AC1BDBBC
+        depends_on:
+         - temankondangan-discovery-service
+         - temankondangan-gateway-service
+         - dbpostgresql
+        networks:
+         - temankondangan_network
+         
+networks:
+    temankondangan_network:
+        name: temankondangan_network
